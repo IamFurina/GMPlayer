@@ -66,7 +66,7 @@ const useSettingDataStore = defineStore("settingData", {
       albumImageUrl: "none",
       // 动态背景设置
       dynamicFlowSpeed: false,
-      dynamicFlowSpeedScale: 50,
+      dynamicFlowSpeedScale: 27,
       // 是否显示前奏等待
       countDownShow: true,
       // 是否显示歌词设置

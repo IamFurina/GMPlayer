@@ -21,7 +21,7 @@
       </Transition>
 
       <template v-if="setting.backgroundImageShow === 'eplor'">
-        <BackgroundRender :fps="music.getPlayState ? setting.fps : 0"
+        <BackgroundRender :fps="music.getPlayState ? setting.fps : 0" :playing="music.getPlayState"
           :flowSpeed="music.getPlayState ? (setting.dynamicFlowSpeed ? dynamicFlowSpeed : setting.flowSpeed) : 0"
           :album="setting.albumImageUrl === 'none' ? music.getPlaySongData.album.picUrl.replace(/^http:/, 'https:') : setting.albumImageUrl"
           :renderScale="setting.renderScale" class="overlay" />
@@ -68,9 +68,9 @@
                   <div class="name text-hidden">
                     <span>{{
                       music.getPlaySongData
-                        ? music.getPlaySongData.name
-                        : $t("other.noSong")
-                    }}</span>
+                      ? music.getPlaySongData.name
+                      : $t("other.noSong")
+                      }}</span>
                     <span v-if="music.getPlaySongData && music.getPlaySongData.alia">{{ music.getPlaySongData.alia[0]
                       }}</span>
                   </div>
@@ -84,34 +84,6 @@
                 <RollingLyrics @mouseenter="
                   lrcMouseStatus = setting.lrcMousePause ? true : false
                   " @mouseleave="lrcAllLeave" @lrcTextClick="lrcTextClick" />
-                <div :class="menuShow ? 'menu show' : 'menu'" v-show="setting.playerStyle === 'record'">
-                  <div class="time">
-                    <span>{{ music.getPlaySongTime.songTimePlayed }}</span>
-                    <vue-slider v-model="music.getPlaySongTime.barMoveDistance" @drag-start="music.setPlayState(false)"
-                      @drag-end="sliderDragEnd" @click.stop="
-                        songTimeSliderUpdate(music.getPlaySongTime.barMoveDistance)
-                        " :tooltip="'none'" />
-                    <span>{{ music.getPlaySongTime.songTimeDuration }}</span>
-                  </div>
-                  <div class="control">
-                    <n-icon v-if="!music.getPersonalFmMode" class="prev" size="30" :component="SkipPreviousRound"
-                      @click.stop="music.setPlaySongIndex('prev')" />
-                    <n-icon v-else class="dislike" :component="ThumbDownRound"
-                      @click="music.setFmDislike(music.getPersonalFmData.id)" />
-                    <div class="play-state">
-                      <n-button :loading="music.getLoadingState" secondary circle :keyboard="false" :focusable="false">
-                        <template #icon>
-                          <Transition name="fade" mode="out-in">
-                            <n-icon size="42" :component="music.getPlayState ? PauseRound : PlayArrowRound"
-                              @click.stop="music.setPlayState(!music.getPlayState)" />
-                          </Transition>
-                        </template>
-                      </n-button>
-                    </div>
-                    <n-icon class="next" size="30" :component="SkipNextRound"
-                      @click.stop="music.setPlaySongIndex('next')" />
-                  </div>
-                </div>
               </div>
             </Transition>
           </div>
@@ -121,8 +93,73 @@
       <Spectrum v-if="setting.musicFrequency" :height="60" :show="music.showBigPlayer" />
       <!-- 歌词设置 -->
       <LyricSetting ref="LyricSettingRef" />
+
+      <!-- Immersive Controls -->
+      <div class="immersive-controls-container">
+        <Transition name="fade">
+          <div class="immersive-controls">
+            <div class="controls-backdrop"></div>
+            <div class="control-content">
+              <!-- Left Column -->
+              <div class="control-left">
+                <n-icon v-if="music.getPlaySongData && user.userLogin" class="control-icon"
+                  :component="music.getSongIsLike(music.getPlaySongData.id) ? FavoriteRound : FavoriteBorderRound"
+                  @click="music.changeLikeList(music.getPlaySongData.id, !music.getSongIsLike(music.getPlaySongData.id))" />
+                <n-icon class="control-icon" :component="PlaylistAddRound" />
+                <n-icon class="control-icon" :component="DownloadRound" />
+              </div>
+
+              <!-- Center Column -->
+              <div class="control-center">
+                <div class="playback-controls">
+                  <n-icon v-if="!music.getPersonalFmMode" class="control-icon" :component="SkipPreviousRound"
+                    @click.stop="music.setPlaySongIndex('prev')" />
+                  <div class="play-state">
+                    <n-button :loading="music.getLoadingState" secondary circle :keyboard="false" :focusable="false">
+                      <template #icon>
+                        <n-icon size="42" :component="music.getPlayState ? PauseRound : PlayArrowRound"
+                          @click.stop="music.setPlayState(!music.getPlayState)" />
+                      </template>
+                    </n-button>
+                  </div>
+                  <n-icon class="control-icon" :component="SkipNextRound"
+                    @click.stop="music.setPlaySongIndex('next')" />
+                </div>
+                <div class="progress-bar">
+                  <span class="time">{{ music.getPlaySongTime.songTimePlayed }}</span>
+                  <vue-slider v-model="music.getPlaySongTime.barMoveDistance" @drag-start="music.setPlayState(false)"
+                    @drag-end="sliderDragEnd" @click.stop="songTimeSliderUpdate(music.getPlaySongTime.barMoveDistance)"
+                    :tooltip="'none'" />
+                  <span class="time">{{ music.getPlaySongTime.songTimeDuration }}</span>
+                </div>
+              </div>
+
+              <!-- Right Column -->
+              <div class="control-right">
+                <div class="volume-control">
+                  <n-popover trigger="hover" placement="top" :keep-alive-on-hover="false">
+                    <template #trigger>
+                      <n-icon class="control-icon" :component="volumeIcon" @click="volumeMute" />
+                    </template>
+                    <vue-slider :tooltip="'none'" :min="0" :max="1" :interval="0.001" v-model="persistData.playVolume"
+                      class="volume-slider" />
+                  </n-popover>
+                </div>
+                <n-icon class="control-icon"
+                  :component="music.getPlaySongMode === 'normal' ? PlayCycle : music.getPlaySongMode === 'random' ? ShuffleOne : PlayOnce"
+                  @click="music.setPlaySongMode()" />
+                <n-icon class="control-icon" :component="QueueMusicRound" />
+                <n-icon class="control-icon" :component="MessageFilled" @click="toComment" />
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </div>
+
     </div>
   </Transition>
+
+
 </template>
 
 <script setup>
@@ -136,8 +173,19 @@ import {
   SkipNextRound,
   SkipPreviousRound,
   ThumbDownRound,
+  FavoriteRound,
+  FavoriteBorderRound,
+  PlaylistAddRound,
+  QueueMusicRound,
+  DownloadRound,
+  VolumeOffRound,
+  VolumeMuteRound,
+  VolumeDownRound,
+  VolumeUpRound,
+  MessageFilled,
 } from "@vicons/material";
-import { musicStore, settingStore, siteStore } from "@/store";
+import { PlayCycle, PlayOnce, ShuffleOne } from "@icon-park/vue-next";
+import { musicStore, settingStore, siteStore, userStore } from "@/store";
 import { useRouter } from "vue-router";
 import { setSeek } from "@/utils/Player";
 import PlayerRecord from "./PlayerRecord.vue";
@@ -156,7 +204,9 @@ import { storeToRefs } from "pinia";
 const router = useRouter();
 const music = musicStore();
 const site = siteStore();
+const { persistData } = storeToRefs(music);
 const setting = settingStore();
+const user = userStore();
 
 const { songPicGradient, songPicColor } = storeToRefs(site)
 
@@ -294,15 +344,32 @@ watch(
 // 监听频谱更新
 watch(() => music.getSpectrumsData, throttle(200, (val) => {
   if (!music.getPlayState || !setting.dynamicFlowSpeed) return;
-  const variance = Math.max(Math.round(analyzeAudioIntensity(val) * setting.dynamicFlowSpeedScale), 6)
+  const variance = Math.max(Math.round(analyzeAudioIntensity(val) * setting.dynamicFlowSpeedScale * 7), 6)
   dynamicFlowSpeed.value = variance
 }))
 
 // 监听主题色改变
 watch(
   () => site.songPicColor,
-  () => changePwaColor()
-);
+  () => changePwaColor());
+// Computed volume icon
+const volumeIcon = computed(() => {
+  if (persistData.value.playVolume === 0) return VolumeOffRound;
+  if (persistData.value.playVolume < 0.4) return VolumeMuteRound;
+  if (persistData.value.playVolume < 0.7) return VolumeDownRound;
+  return VolumeUpRound;
+});
+
+// Volume mute toggle
+const volumeMute = () => {
+  if (persistData.value.playVolume > 0) {
+    persistData.value.playVolumeMute = persistData.value.playVolume;
+    persistData.value.playVolume = 0;
+  } else {
+    persistData.value.playVolume = persistData.value.playVolumeMute;
+  }
+};
+
 </script>
 
 <style lang="scss" scoped>
@@ -778,6 +845,188 @@ watch(
     .avBars {
       max-width: 1600px;
       opacity: 0.6;
+    }
+  }
+}
+
+.immersive-controls-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 2001; // Higher than bplayer
+  display: flex;
+  opacity: 0;
+  justify-content: center;
+  transition: opacity 0.3s ease;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  .immersive-controls {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    transition: opacity 0.3s ease;
+
+    .controls-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(var(--main-cover-color), 0.14);
+      backdrop-filter: blur(10px);
+      z-index: -1;
+    }
+
+    .control-content {
+      display: grid;
+      grid-template-columns: minmax(200px, 1fr) minmax(400px, 2fr) minmax(200px, 1fr);
+      gap: 2rem;
+      padding: 1.5rem 2rem;
+      align-items: center;
+      color: rgb(var(--main-cover-color));
+
+      .control-left {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        justify-content: flex-start;
+      }
+
+      .control-right {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        justify-content: flex-end;
+
+        .volume-control {
+          display: flex;
+          align-items: center;
+
+          :deep(.volume-slider) {
+            width: 100px;
+            margin: 0.5rem;
+
+            .vue-slider-rail {
+              background-color: rgba(var(--main-cover-color), 0.2);
+
+              .vue-slider-process {
+                background-color: rgb(var(--main-cover-color));
+              }
+
+              .vue-slider-dot-handle {
+                background-color: rgb(var(--main-cover-color));
+                box-shadow: none;
+              }
+            }
+          }
+        }
+      }
+
+      .control-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+
+        .playback-controls {
+          display: flex;
+          align-items: center;
+          gap: 2rem;
+
+          .play-state {
+            transform: scale(1.2);
+            margin: 0 1rem;
+
+            :deep(.n-button) {
+              background-color: transparent;
+              border: none;
+              color: rgb(var(--main-cover-color));
+
+              &:hover {
+                background-color: rgba(var(--main-cover-color), 0.1);
+              }
+            }
+          }
+        }
+
+        .progress-bar {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          width: 100%;
+          padding: 0 1rem;
+
+          .time {
+            font-size: 0.875rem;
+            opacity: 0.8;
+            min-width: 45px;
+          }
+
+          :deep(.vue-slider) {
+            flex: 1;
+
+            .vue-slider-rail {
+              background-color: rgba(var(--main-cover-color), 0.2);
+              height: 4px;
+              border-radius: 2px;
+
+              .vue-slider-process {
+                background-color: rgb(var(--main-cover-color));
+              }
+
+              .vue-slider-dot {
+                height: 12px;
+                width: 12px;
+
+                .vue-slider-dot-handle {
+                  background-color: rgb(var(--main-cover-color));
+                  box-shadow: none;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .control-icon {
+      font-size: 24px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      opacity: 0.8;
+
+      &:hover {
+        transform: scale(1.1);
+        opacity: 1;
+      }
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .immersive-controls-container {
+    .immersive-controls {
+      .control-content {
+        grid-template-columns: 1fr 2fr 1fr;
+        gap: 1rem;
+        padding: 1rem;
+
+        .control-left, .control-right {
+          gap: 1rem;
+        }
+
+        .control-center {
+          .playback-controls {
+            gap: 1rem;
+          }
+
+          .progress-bar {
+            padding: 0;
+          }
+        }
+      }
     }
   }
 }

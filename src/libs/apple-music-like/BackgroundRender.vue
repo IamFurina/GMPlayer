@@ -3,6 +3,7 @@
 </template>
 
 <script setup lang="ts">
+// Thanks to Steven-xmh's `applemusic-like-lyrics` package.
 import {
   BackgroundRender as CoreBackgroundRender,
   AbstractBaseRenderer,

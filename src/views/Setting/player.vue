@@ -45,7 +45,7 @@
           <n-form-item label="动态流速倍率">
             <n-input-number :min="0.1" v-model:value="dynamicFlowSpeedScale" :disabled="!dynamicFlowSpeed" />
             <template #feedback>
-              调节动态流速的乘算倍率，倍率越高，随音频烈度的而产生的流速变化会越明显，性能消耗也会越大，默认为 50。
+              调节动态流速的乘算倍率，倍率越高，随音频烈度的而产生的流速变化会越明显，性能消耗也会越大，默认为 25。
             </template>
           </n-form-item>
           <br />

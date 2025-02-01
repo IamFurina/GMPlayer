@@ -1,9 +1,63 @@
 import { parseLrc as parseCoreLrc, parseYrc as parseCoreYrc } from "@applemusic-like-lyrics/lyric";
 import { msToS, msToTime } from "./timeTools";
+import { musicStore } from "../store";
 
+interface LyricWord {
+  word: string;
+  startTime: number;
+  endTime: number;
+}
+
+interface LyricLine {
+  words: LyricWord[];
+  isBG?: boolean;
+  isDuet?: boolean;
+}
+
+interface ParsedLyricLine {
+  time: number;
+  content: string;
+  tran?: string;
+  roma?: string;
+}
+
+interface YrcLine {
+  time: number;
+  endTime: number;
+  content: {
+    time: number;
+    endTime: number;
+    duration: number;
+    content: string;
+    endsWithSpace: boolean;
+  }[];
+  TextContent: string;
+}
+
+interface LyricData {
+  lrc?: { lyric: string } | null;
+  tlyric?: { lyric: string } | null;
+  romalrc?: { lyric: string } | null;
+  yrc?: { lyric: string } | null;
+  ytlrc?: { lyric: string } | null;
+  yromalrc?: { lyric: string } | null;
+  code?: number;
+}
+
+interface ParsedLyricResult {
+  hasLrcTran: boolean;
+  hasLrcRoma: boolean;
+  hasYrc: boolean;
+  hasYrcTran: boolean;
+  hasYrcRoma: boolean;
+  lrc: ParsedLyricLine[];
+  yrc: YrcLine[];
+  lrcAMData: any[];
+  yrcAMData: any[];
+}
 
 // 恢复默认
-const resetSongLyric = () => {
+const resetSongLyric = (): void => {
   const music = musicStore();
   music.songLyric = {
     lrc: [],
@@ -20,10 +74,10 @@ const resetSongLyric = () => {
 
 /**
  * Parse lyric data from API response
- * @param {Object} data API response data
- * @returns {Object} Parsed lyric data
+ * @param {LyricData} data API response data
+ * @returns {ParsedLyricResult | undefined} Parsed lyric data
  */
-const parseLyric = (data) => {
+const parseLyric = (data: LyricData): ParsedLyricResult | undefined => {
   if (!data || data.code !== 200) {
     resetSongLyric();
     return;
@@ -41,7 +95,7 @@ const parseLyric = (data) => {
   };
 
   // Initialize result object
-  const result = {
+  const result: ParsedLyricResult = {
     hasLrcTran: !!lrcData.tlyric,
     hasLrcRoma: !!lrcData.romalrc,
     hasYrc: !!lrcData.yrc,
@@ -59,8 +113,8 @@ const parseLyric = (data) => {
     result.lrc = parseLrcData(lrcParsed);
 
     // Parse translations if they exist
-    let tranParsed = [];
-    let romaParsed = [];
+    let tranParsed: LyricLine[] = [];
+    let romaParsed: LyricLine[] = [];
 
     if (lrcData.tlyric) {
       tranParsed = parseCoreLrc(lrcData.tlyric);
@@ -81,8 +135,8 @@ const parseLyric = (data) => {
     result.yrc = parseYrcData(yrcParsed);
 
     // Parse translations if they exist
-    let tranParsed = [];
-    let romaParsed = [];
+    let tranParsed: LyricLine[] = [];
+    let romaParsed: LyricLine[] = [];
 
     if (lrcData.ytlrc) {
       tranParsed = parseCoreLrc(lrcData.ytlrc);
@@ -102,10 +156,10 @@ const parseLyric = (data) => {
 
 /**
  * Parse normal LRC lyrics
- * @param {Array} lrcData Array of LyricLine objects
- * @returns {Array} Parsed lyric data
+ * @param {LyricLine[]} lrcData Array of LyricLine objects
+ * @returns {ParsedLyricLine[]} Parsed lyric data
  */
-const parseLrcData = (lrcData) => {
+const parseLrcData = (lrcData: LyricLine[]): ParsedLyricLine[] => {
   if (!lrcData) return [];
 
   return lrcData
@@ -121,15 +175,15 @@ const parseLrcData = (lrcData) => {
         content
       };
     })
-    .filter(line => line !== null);
+    .filter((line): line is ParsedLyricLine => line !== null);
 };
 
 /**
  * Parse YRC (word-by-word) lyrics
- * @param {Array} yrcData Array of LyricLine objects
- * @returns {Array} Parsed YRC data
+ * @param {LyricLine[]} yrcData Array of LyricLine objects
+ * @returns {YrcLine[]} Parsed YRC data
  */
-const parseYrcData = (yrcData) => {
+const parseYrcData = (yrcData: LyricLine[]): YrcLine[] => {
   if (!yrcData) return [];
 
   return yrcData
@@ -142,12 +196,12 @@ const parseYrcData = (yrcData) => {
         time: msToS(word.startTime),
         endTime: msToS(word.endTime),
         duration: msToS(word.endTime - word.startTime),
-        content: word.word.trim(),
+        content: word.word.endsWith(" ") ? word.word : word.word.trim(),
         endsWithSpace: word.word.endsWith(" ")
       }));
 
       const contentStr = content
-        .map(word => word.content + (word.endsWithSpace ? " " : ""))
+        .map(word => word.content)
         .join("");
 
       if (!contentStr) return null;
@@ -159,22 +213,26 @@ const parseYrcData = (yrcData) => {
         TextContent: contentStr
       };
     })
-    .filter(line => line !== null);
+    .filter((line): line is YrcLine => line !== null);
 };
 
 /**
  * Align lyrics with translations
- * @param {Array} lyrics Main lyrics array
- * @param {Array} otherLyrics Translation lyrics array
+ * @param {(ParsedLyricLine[] | YrcLine[])} lyrics Main lyrics array
+ * @param {ParsedLyricLine[]} otherLyrics Translation lyrics array
  * @param {string} key Property key for translation ('tran' or 'roma')
- * @returns {Array} Aligned lyrics array
+ * @returns {(ParsedLyricLine[] | YrcLine[])} Aligned lyrics array
  */
-const alignLyrics = (lyrics, otherLyrics, key) => {
+const alignLyrics = <T extends ParsedLyricLine | YrcLine>(
+  lyrics: T[],
+  otherLyrics: ParsedLyricLine[],
+  key: 'tran' | 'roma'
+): T[] => {
   if (lyrics.length && otherLyrics.length) {
     lyrics.forEach(mainLine => {
       otherLyrics.forEach(transLine => {
         if (mainLine.time === transLine.time || Math.abs(mainLine.time - transLine.time) < 0.6) {
-          mainLine[key] = transLine.content;
+          (mainLine as any)[key] = transLine.content;
         }
       });
     });
@@ -184,12 +242,16 @@ const alignLyrics = (lyrics, otherLyrics, key) => {
 
 /**
  * Parse lyrics for Apple Music like format
- * @param {Array} lrcData Main lyrics array
- * @param {Array} tranData Translation lyrics array
- * @param {Array} romaData Romanization lyrics array
- * @returns {Array} Formatted lyrics array
+ * @param {LyricLine[]} lrcData Main lyrics array
+ * @param {LyricLine[]} tranData Translation lyrics array
+ * @param {LyricLine[]} romaData Romanization lyrics array
+ * @returns {any[]} Formatted lyrics array
  */
-const parseAMData = (lrcData, tranData = [], romaData = []) => {
+const parseAMData = (
+  lrcData: LyricLine[],
+  tranData: LyricLine[] = [],
+  romaData: LyricLine[] = []
+): any[] => {
   return lrcData.map((line, index, lines) => ({
     words: line.words,
     startTime: line.words[0]?.startTime ?? 0,
@@ -203,14 +265,13 @@ const parseAMData = (lrcData, tranData = [], romaData = []) => {
   }));
 };
 
-// Export both named exports and default export
 export {
   parseLyric,
   parseLrcData,
   parseYrcData,
   alignLyrics,
-  parseAMData
+  parseAMData,
+  resetSongLyric
 };
 
-export { resetSongLyric };
 export default parseLyric;

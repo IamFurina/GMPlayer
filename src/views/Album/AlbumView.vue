@@ -38,7 +38,7 @@
             block
             strong
             secondary
-            v-if="albumDetail?.description.length > 70"
+            v-if="albumDetail?.description?.length > 70"
             @click="albumDescShow = true"
           >
             {{ $t("general.name.allDesc") }}

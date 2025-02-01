@@ -1,26 +1,26 @@
 <div align="center">
 <img alt="logo" height="80" src="./public/images/logo/favicon.png" />
-<h2>GMlayer</h2>
-<p>一个简约的在线音乐播放器</p>
+<h2>GMPlayer</h2>
+<p>SPlayer enhanced version</p>
 <img alt="main" src="./screenshots/main.png" />
 </div>
 <br />
 
 ## 说明
 
-> **当前项目正在重构中，当前版本进入维护模式，仅在遇到重大问题时会进行修复**
+> **本项目基于 imsyy/SPlayer 1.0 进行开发，修复了原作者写出的一些 Bug 以及添加了一些本人喜欢的样式/功能**
 > - 支持客户端与网页端
 > - 支持现有版本所有功能
 > - 新增支持播放与管理本地歌曲
 
 - 本项目采用 [Vue 3](https://cn.vuejs.org/) 全家桶和 [Naïve UI](https://www.naiveui.com/) 组件库及 `SCSS` 开发
 - 目前主要以 `Web` 端为主，`Tauri` 在写了在写了
-- 仅对移动端做了基础适配，**不保证功能全部可用**
+- 移动端已适配，但尚未测试完全，**不保证功能全部可用**
 - 欢迎各位大佬指点和 `Star` 哦 😍
 
 ## 👀 Demo
 
-- [SPlayer](https://music.gbclstudio.cn/)
+- [GMPlayer](https://music.gbclstudio.cn/)
 
 ## 🎉 功能
 
@@ -41,18 +41,19 @@
 - 支持逐字歌词
 - 歌词滚动以及歌词翻译
 - MV 与视频播放
-- 音乐频谱显示（ 暂时去除，还待完善 ）
+- 音乐频谱显示
 - 音乐渐入渐出
 - 支持 PWA
 - 支持评论区及评论点赞
 - 明暗模式自动 / 手动切换
-- 移动端基础适配
+- 移动端适配
 - `i18n` 支持
+- 流体背景/高级歌词 (By [@applemusic-like-lyrics](https://github.com/steve-xmh/applemusic-like-lyrics/))
 
 #### 待办
 
 - [ ] 电台节目支持
-- [ ] 移动端适配与 Tauri 跨平台
+- [ ] Tauri 跨平台
 - [ ] 发表评论
 
 ## 😍 Screenshots
@@ -140,11 +141,12 @@ pnpm build
 - [BlurLyric](https://github.com/Project-And-Factory/BlurLyric)
 - [Vue-mmPlayer](https://github.com/maomao1996/Vue-mmPlayer)
 - [原作: SPlayer](https://github.com/imsyy/SPlayer)
+- [applemusic-like-lyrics](https://github.com/steve-xmh/applemusic-like-lyrics/)
 
 ## 📜 开源许可
 
 - **本项目仅供个人学习研究使用，禁止用于商业及非法用途**
-- 本项目基于 [MIT license](https://opensource.org/license/mit/) 许可进行开源
+- 本项目基于 [AGPL-3.0 license](https://opensource.org/license/agpl-v3) 许可进行开源，Fork/修改 请遵循 AGPL-3.0 协议要求
 
 ## 📢 免责声明
 
