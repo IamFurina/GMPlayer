@@ -7,7 +7,7 @@ const useSettingDataStore = defineStore("settingData", {
   state: () => {
     return {
       // 全局主题
-      theme: "light",
+      theme: "dark",
       themeAuto: true,
       themeType: "red",
       themeData: {},
@@ -26,13 +26,13 @@ const useSettingDataStore = defineStore("settingData", {
       // 是否显示逐字歌词
       showYrc: true,
       // 是否显示逐字歌词动画
-      showYrcAnimation: true,
+      showYrcAnimation: false,
       // 是否显示逐字歌词上浮
       showYrcTransform: false,
       // 是否显示歌词翻译
-      showTransl: false,
+      showTransl: true,
       // 是否显示歌词音译
-      showRoma: false,
+      showRoma: true,
       // 歌曲音质
       songLevel: "exhigh",
       // 歌词位置
@@ -42,17 +42,17 @@ const useSettingDataStore = defineStore("settingData", {
       // 歌词大小
       lyricsFontSize: 3.6,
       // 歌词字体
-      lyricFont: 'HarmonyOS Sans SC',
+      lyricFont: 'PingFang SC',
       // 歌词字重
-      lyricFontWeight: 'normal',
+      lyricFontWeight: 'bold',
       // 歌词字间距
       lyricLetterSpacing: 'normal',
       // 歌词行高
       lyricLineHeight: 1.8,
       // 歌词模糊
-      lyricsBlur: true,
+      lyricsBlur: false,
       // 音乐频谱
-      musicFrequency: false,
+      musicFrequency: true,
       // 鼠标移入歌词区域暂停滚动
       lrcMousePause: false,
       // 是否使用网易云解灰
@@ -70,7 +70,7 @@ const useSettingDataStore = defineStore("settingData", {
       // 是否显示前奏等待
       countDownShow: true,
       // 是否显示歌词设置
-      showLyricSetting: false,
+      showLyricSetting: true,
       // 歌曲渐入渐出
       songVolumeFade: true,
       // 列表默认数量
