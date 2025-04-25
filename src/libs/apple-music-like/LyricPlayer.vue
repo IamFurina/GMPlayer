@@ -31,6 +31,7 @@ const music = musicStore();
 const setting = settingStore();
 
 const emit = defineEmits<{
+  'line-click': [e: { line: { getLine: () => { startTime: number } } }],
   lrcTextClick: [time: number]
 }>();
 
@@ -50,13 +51,14 @@ const alignPosition = computed(() =>
 
 // 计算歌词样式
 const lyricStyles = computed(() => ({
-  '--amll-lyric-view-color': setting.immersivePlayer ? site.songPicColor : 'rgb(239, 239, 239)',
-  '--amll-lyric-player-font-size': `${setting.lyricsFontSize * 10}px`,
-  '--amll-lyric-player-line-height': setting.lyricLineHeight,
+  '--amll-lp-color': mainColor.value,
+  '--amll-lyric-player-font-size': `${setting.lyricsFontSize * 11}px`,
+  '--amll-lp-height': setting.lyricLineHeight,
   'font-weight': setting.lyricFontWeight,
   'font-family': setting.lyricFont,
   'letter-spacing': setting.lyricLetterSpacing,
   'cursor': 'pointer',
+  '--amll-lyric-view-color': mainColor.value,
   'user-select': 'none',
   '-webkit-tap-highlight-color': 'transparent'
 }));
@@ -65,24 +67,28 @@ const lyricStyles = computed(() => ({
 const handleLineClick = (e: { line: { getLine: () => { startTime: number } } }) => {
   const time = e.line.getLine().startTime;
   if (time != null) {
-    console.log("click time:", time);
-    emit("lrcTextClick", time);
-    music.playState = true;
+    emit("lrcTextClick", time / 1000);
+    emit("line-click", e); // 同时发送原始事件，保持兼容性
   }
 };
+
+const mainColor = computed(() => {
+  if (!setting.immersivePlayer) return "rgb(239, 239, 239)";
+  return `rgb(${site.songPicColor})`;
+});
 
 // 获取当前歌词
 const currentLyrics = computed<LyricLine[]>(() => {
   const songLyric = music.songLyric || { lrcAMData: [], yrcAMData: [] };
-  return createLyricsProcessor(songLyric, {
+  const lyricData = createLyricsProcessor(songLyric, { 
     showYrc: setting.showYrc,
     showRoma: setting.showRoma,
     showTransl: setting.showTransl
   });
+  return lyricData;
 });
 
 watch(() => music.playState, (newState) => {
-  console.log("music.playState:", newState);
   if (newState) {
     lyricPlayerRef.value?.lyricPlayer?.value?.setCurrentTime(currentTime.value);
   }

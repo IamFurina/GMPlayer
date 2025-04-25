@@ -2,7 +2,7 @@
   <Transition>
     <div :key="currentLyrics?.[0]?.startTime" 
          :class="lyricClasses">
-      <LyricPlayer class="am-lyric" />
+      <LyricPlayer class="am-lyric" @line-click="handleLineClick" @lrcTextClick="handleLrcTextClick" />
     </div>
   </Transition>
 </template>
@@ -13,8 +13,25 @@ import { musicStore, settingStore } from "../../store";
 import LyricPlayer from "../../libs/apple-music-like/LyricPlayer.vue";
 import { createLyricsProcessor } from "../../libs/apple-music-like/processLyrics";
 
+const emit = defineEmits<{
+  lrcTextClick: [time: number]
+}>();
+
 const music = musicStore();
 const setting = settingStore();
+
+// 处理歌词点击
+const handleLineClick = (e: { line: { getLine: () => { startTime: number } } }) => {
+  const time = e.line.getLine().startTime;
+  if (time != null) {
+    emit("lrcTextClick", time / 1000);
+  }
+};
+
+// 直接处理从 LyricPlayer 传递的 lrcTextClick 事件
+const handleLrcTextClick = (time: number) => {
+  emit("lrcTextClick", time);
+};
 
 // 计算歌词容器的类名
 const lyricClasses = computed(() => ({
